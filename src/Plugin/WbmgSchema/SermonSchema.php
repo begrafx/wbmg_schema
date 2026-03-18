@@ -2,7 +2,7 @@
 
 namespace Drupal\wbmg_schema\Plugin\WbmgSchema;
 
-use Drupal\wbmg_schema\Annotation\WbmgSchema;
+use Drupal\wbmg_schema\Plugin\WbmgSchema\BaseSchema;
 
 /**
  * @WbmgSchema(
@@ -12,17 +12,39 @@ use Drupal\wbmg_schema\Annotation\WbmgSchema;
  */
 class SermonSchema extends BaseSchema {
 
+  /**
+   * Returns the list of fields in this schema.
+   *
+   * Keys must match Drupal field machine names.
+   *
+   * @return array
+   *   Array of field_name => type
+   */
   public function getFields() {
     return [
+      // Base field
       'title' => 'string',
-      'speaker' => 'string',
-      'date' => 'datetime',
-      'scripture' => 'string',
+
+      // Custom fields (use actual Drupal field machine names)
+      'field_speaker' => 'string',
+      'field_date' => 'datetime',
+      'field_scripture' => 'string',
     ];
   }
 
+  /**
+   * Returns an array of required fields for this schema.
+   *
+   * Keys must match Drupal field machine names.
+   *
+   * @return array
+   *   Array of required field machine names
+   */
   public function getRequiredFields() {
-    return ['title', 'date'];
+    return [
+      'title',
+      'field_date',
+    ];
   }
 
 }
