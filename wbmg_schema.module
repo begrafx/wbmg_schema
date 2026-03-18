@@ -6,7 +6,6 @@ use Drupal\Core\Entity\EntityInterface;
  * Implements hook_entity_presave().
  */
 function wbmg_schema_entity_presave(EntityInterface $entity) {
-
   $resolver = \Drupal::service('wbmg_schema.resolver');
   $validator = \Drupal::service('wbmg_schema.validator');
 
@@ -16,17 +15,34 @@ function wbmg_schema_entity_presave(EntityInterface $entity) {
     return;
   }
 
-  // Convert entity to array (simple version for now)
+  // Collect all field data, including multi-value fields.
   $data = [];
 
   foreach ($entity->getFields() as $field_name => $field) {
-    $data[$field_name] = $field->value ?? NULL;
+    // Skip fields without values
+    if ($field->isEmpty()) {
+      $data[$field_name] = NULL;
+      continue;
+    }
+
+    // Single-value field
+    if ($field->count() === 1) {
+      $data[$field_name] = $field->value ?? NULL;
+    }
+    // Multi-value field
+    else {
+      $values = [];
+      foreach ($field as $item) {
+        $values[] = $item->value ?? NULL;
+      }
+      $data[$field_name] = $values;
+    }
   }
 
+  // Validate the entity data against the schema
   $errors = $validator->validate($schema_id, $data);
 
   if (!empty($errors)) {
     throw new \Exception(implode("\n", $errors));
   }
-
 }
