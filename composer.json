@@ -1,5 +1,5 @@
 {
-  "name": "wbmg/wbmg_schema",
+  "name": "begrafx/wbmg_schema",
   "type": "drupal-custom-module",
   "description": "WBMG Schema framework module",
   "license": "private - under development",

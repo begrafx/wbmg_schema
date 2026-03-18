@@ -2,3 +2,7 @@ services:
   wbmg_schema.manager:
     class: Drupal\wbmg_schema\Schema\SchemaManager
     arguments: ['@container.namespaces', '@cache.discovery', '@module_handler']
+
+  wbmg_schema.validator:
+    class: Drupal\wbmg_schema\Schema\SchemaValidator
+    arguments: ['@wbmg_schema.manager']
