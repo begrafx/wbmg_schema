@@ -1,0 +1,4 @@
+services:
+  wbmg_schema.manager:
+    class: Drupal\wbmg_schema\Schema\SchemaManager
+    arguments: ['@container.namespaces', '@cache.discovery', '@module_handler']

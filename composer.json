@@ -1,0 +1,10 @@
+{
+  "name": "wbmg/wbmg_schema",
+  "type": "drupal-custom-module",
+  "description": "WBMG Schema framework module",
+  "autoload": {
+    "psr-4": {
+      "Drupal\\wbmg_schema\\": "src/"
+    }
+  }
+}
