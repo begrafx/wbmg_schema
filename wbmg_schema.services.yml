@@ -6,3 +6,7 @@ services:
   wbmg_schema.validator:
     class: Drupal\wbmg_schema\Schema\SchemaValidator
     arguments: ['@wbmg_schema.manager']
+
+  wbmg_schema.resolver:
+    class: Drupal\wbmg_schema\Schema\SchemaResolver
+    arguments: ['@config.factory']

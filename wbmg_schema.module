@@ -1,0 +1,32 @@
+<?php
+
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_entity_presave().
+ */
+function wbmg_schema_entity_presave(EntityInterface $entity) {
+
+  $resolver = \Drupal::service('wbmg_schema.resolver');
+  $validator = \Drupal::service('wbmg_schema.validator');
+
+  $schema_id = $resolver->getSchemaId($entity);
+
+  if (!$schema_id) {
+    return;
+  }
+
+  // Convert entity to array (simple version for now)
+  $data = [];
+
+  foreach ($entity->getFields() as $field_name => $field) {
+    $data[$field_name] = $field->value ?? NULL;
+  }
+
+  $errors = $validator->validate($schema_id, $data);
+
+  if (!empty($errors)) {
+    throw new \Exception(implode("\n", $errors));
+  }
+
+}

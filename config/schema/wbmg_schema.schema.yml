@@ -1,0 +1,7 @@
+wbmg_schema.bundle:
+  type: mapping
+  label: 'WBMG Schema Bundle Mapping'
+  mapping:
+    schema:
+      type: string
+      label: 'Schema ID'
