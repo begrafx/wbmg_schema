@@ -2,6 +2,7 @@
   "name": "wbmg/wbmg_schema",
   "type": "drupal-custom-module",
   "description": "WBMG Schema framework module",
+  "license": "private - under development",
   "autoload": {
     "psr-4": {
       "Drupal\\wbmg_schema\\": "src/"
