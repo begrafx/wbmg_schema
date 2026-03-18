@@ -12,38 +12,24 @@ use Drupal\wbmg_schema\Plugin\WbmgSchema\BaseSchema;
  */
 class SermonSchema extends BaseSchema {
 
-  /**
-   * Returns the list of fields in this schema.
-   *
-   * Keys must match Drupal field machine names.
-   *
-   * @return array
-   *   Array of field_name => type
-   */
   public function getFields() {
     return [
-      // Base field
       'title' => 'string',
-
-      // Custom fields (use actual Drupal field machine names)
       'field_speaker' => 'string',
-      'field_date' => 'datetime',
+      'field_sermon_date' => 'datetime',   // optional
+      'field_date' => 'datetime',          // required Publish Date
       'field_scripture' => 'string',
+      'field_audio' => 'entity',           // optional Media reference
+      'field_video' => 'entity',           // optional Media reference
+      'field_series' => 'string',
+      'field_external_id' => 'string',
     ];
   }
 
-  /**
-   * Returns an array of required fields for this schema.
-   *
-   * Keys must match Drupal field machine names.
-   *
-   * @return array
-   *   Array of required field machine names
-   */
   public function getRequiredFields() {
     return [
       'title',
-      'field_date',
+      'field_date',  // matches “Publish Date” required field
     ];
   }
 
