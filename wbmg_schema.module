@@ -6,6 +6,12 @@ use Drupal\Core\Entity\EntityInterface;
  * Implements hook_entity_presave().
  */
 function wbmg_schema_entity_presave(EntityInterface $entity) {
+
+  // Only act on nodes (optional safety)
+  if ($entity->getEntityTypeId() !== 'node') {
+    return;
+  }
+
   $resolver = \Drupal::service('wbmg_schema.resolver');
   $validator = \Drupal::service('wbmg_schema.validator');
 
@@ -15,30 +21,40 @@ function wbmg_schema_entity_presave(EntityInterface $entity) {
     return;
   }
 
-  // Collect all field data, including multi-value fields.
+  // Collect all field data
   $data = [];
 
-foreach ($entity->getFields() as $field_name => $field) {
-  if ($field->isEmpty()) {
-    $data[$field_name] = NULL;
-    continue;
-  }
+  foreach ($entity->getFields() as $field_name => $field) {
 
-  // Get first item value for single-value field
-  if ($field->count() === 1) {
-    $data[$field_name] = $field->first()->value ?? NULL;
-  }
-  // Multi-value field
-  else {
-    $values = [];
-    foreach ($field as $item) {
-      $values[] = $item->value ?? NULL;
+    if ($field->isEmpty()) {
+      $data[$field_name] = NULL;
+      continue;
     }
-    $data[$field_name] = $values;
-  }
-}
 
-  // Validate the entity data against the schema
+    // Single-value field
+    if ($field->count() === 1) {
+      $data[$field_name] = $field->first()->value ?? NULL;
+    }
+    // Multi-value field
+    else {
+      $values = [];
+      foreach ($field as $item) {
+        $values[] = $item->value ?? NULL;
+      }
+      $data[$field_name] = $values;
+    }
+  }
+
+  // 🔍 DEBUG LOG (safe + extremely useful)
+  \Drupal::logger('wbmg_schema')->debug(
+    "Schema: @schema\nData:\n<pre>@data</pre>",
+    [
+      '@schema' => $schema_id,
+      '@data' => print_r($data, TRUE),
+    ]
+  );
+
+  // Validate
   $errors = $validator->validate($schema_id, $data);
 
   if (!empty($errors)) {

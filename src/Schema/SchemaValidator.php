@@ -4,58 +4,44 @@ namespace Drupal\wbmg_schema\Schema;
 
 class SchemaValidator {
 
-  protected $schemaManager;
-
-  public function __construct(SchemaManager $schemaManager) {
-    $this->schemaManager = $schemaManager;
-  }
-
   /**
    * Validate data against a schema.
+   *
+   * @param string $schema_id
+   * @param array $data
+   *
+   * @return array
+   *   Array of error messages
    */
-  public function validate(string $schema_id, array $data): array {
+  public function validate($schema_id, array $data) {
     $errors = [];
 
-    if (!$this->schemaManager->hasDefinition($schema_id)) {
-      $errors[] = "Schema '$schema_id' does not exist.";
-      return $errors;
+    /** @var \Drupal\wbmg_schema\Schema\SchemaManager $manager */
+    $manager = \Drupal::service('wbmg_schema.manager');
+
+    $definition = $manager->getDefinition($schema_id);
+
+    if (!$definition) {
+      return ["Schema '$schema_id' not found."];
     }
 
-    $schema = $this->schemaManager->createInstance($schema_id);
+    $class = $definition['class'];
+    $schema = new $class();
 
-    // Check required fields
-    foreach ($schema->getRequiredFields() as $field) {
-      if (!isset($data[$field]) || $data[$field] === '') {
+    $required_fields = $schema->getRequiredFields();
+
+    foreach ($required_fields as $field) {
+
+      $value = $data[$field] ?? NULL;
+
+      // 🔥 THIS IS THE FIX
+      if (
+        !isset($data[$field]) ||
+        $value === NULL ||
+        $value === '' ||
+        (is_array($value) && empty($value))
+      ) {
         $errors[] = "Field '$field' is required.";
-      }
-    }
-
-    // Check field types
-    foreach ($schema->getFields() as $field => $type) {
-      if (!isset($data[$field])) {
-        continue;
-      }
-
-      $value = $data[$field];
-
-      switch ($type) {
-        case 'string':
-          if (!is_string($value)) {
-            $errors[] = "Field '$field' must be a string.";
-          }
-          break;
-
-        case 'datetime':
-          if (strtotime($value) === false) {
-            $errors[] = "Field '$field' must be a valid datetime.";
-          }
-          break;
-
-        case 'integer':
-          if (!is_int($value)) {
-            $errors[] = "Field '$field' must be an integer.";
-          }
-          break;
       }
     }
 
