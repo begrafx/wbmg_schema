@@ -7,7 +7,6 @@ use Drupal\Core\Entity\EntityInterface;
  */
 function wbmg_schema_entity_presave(EntityInterface $entity) {
 
-  // Only act on nodes (optional safety)
   if ($entity->getEntityTypeId() !== 'node') {
     return;
   }
@@ -21,10 +20,15 @@ function wbmg_schema_entity_presave(EntityInterface $entity) {
     return;
   }
 
-  // Collect all field data
   $data = [];
 
   foreach ($entity->getFields() as $field_name => $field) {
+
+    // 🔥 SPECIAL HANDLING FOR TITLE (base field)
+    if ($field_name === 'title') {
+      $data[$field_name] = $entity->label();
+      continue;
+    }
 
     if ($field->isEmpty()) {
       $data[$field_name] = NULL;
@@ -33,20 +37,38 @@ function wbmg_schema_entity_presave(EntityInterface $entity) {
 
     // Single-value field
     if ($field->count() === 1) {
-      $data[$field_name] = $field->first()->value ?? NULL;
+      $item = $field->first();
+
+      // Some fields don't use ->value (like entity references)
+      if (isset($item->value)) {
+        $data[$field_name] = $item->value;
+      }
+      elseif (isset($item->target_id)) {
+        $data[$field_name] = $item->target_id;
+      }
+      else {
+        $data[$field_name] = NULL;
+      }
     }
     // Multi-value field
     else {
       $values = [];
+
       foreach ($field as $item) {
-        $values[] = $item->value ?? NULL;
+        if (isset($item->value)) {
+          $values[] = $item->value;
+        }
+        elseif (isset($item->target_id)) {
+          $values[] = $item->target_id;
+        }
       }
+
       $data[$field_name] = $values;
     }
   }
 
-  // 🔍 DEBUG LOG (safe + extremely useful)
-  \Drupal::logger('wbmg_schema')->debug(
+  // 🔍 DEBUG LOG
+  \Drupal::logger('wbmg_schema')->notice(
     "Schema: @schema\nData:\n<pre>@data</pre>",
     [
       '@schema' => $schema_id,
@@ -54,7 +76,6 @@ function wbmg_schema_entity_presave(EntityInterface $entity) {
     ]
   );
 
-  // Validate
   $errors = $validator->validate($schema_id, $data);
 
   if (!empty($errors)) {
