@@ -4,21 +4,10 @@ namespace Drupal\wbmg_schema\Schema;
 
 class SchemaValidator {
 
-  /**
-   * Validate data against a schema.
-   *
-   * @param string $schema_id
-   * @param array $data
-   *
-   * @return array
-   *   Array of error messages
-   */
   public function validate($schema_id, array $data) {
     $errors = [];
 
-    /** @var \Drupal\wbmg_schema\Schema\SchemaManager $manager */
     $manager = \Drupal::service('wbmg_schema.manager');
-
     $definition = $manager->getDefinition($schema_id);
 
     if (!$definition) {
@@ -34,12 +23,12 @@ class SchemaValidator {
 
       $value = $data[$field] ?? NULL;
 
-      // 🔥 THIS IS THE FIX
+      // 🔥 FINAL FIX — robust empty check
       if (
-        !isset($data[$field]) ||
+        !array_key_exists($field, $data) ||
         $value === NULL ||
-        $value === '' ||
-        (is_array($value) && empty($value))
+        (is_string($value) && trim($value) === '') ||
+        (is_array($value) && count(array_filter($value)) === 0)
       ) {
         $errors[] = "Field '$field' is required.";
       }
