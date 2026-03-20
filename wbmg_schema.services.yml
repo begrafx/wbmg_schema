@@ -3,5 +3,5 @@ services:
     class: Drupal\wbmg_schema\Service\SchemaLoader
 
   wbmg_schema.validator:
-    class: Drupal\wbmg_schema\Service\Validator
+    class: Drupal\wbmg_schema\Service\SchemaValidator
     arguments: ['@wbmg_schema.schema_loader']
