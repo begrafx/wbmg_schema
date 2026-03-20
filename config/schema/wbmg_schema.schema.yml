@@ -1,7 +1,41 @@
-wbmg_schema.bundle:
-  type: mapping
-  label: 'WBMG Schema Bundle Mapping'
-  mapping:
-    schema:
-      type: string
-      label: 'Schema ID'
+# wbmg_schema.schema.yml
+# Version: 1.0.1
+# Defines schemas for content types managed by wbmg_schema module.
+
+# ------------------------------
+# Schema for Sermon nodes
+# ------------------------------
+sermon:
+  label: 'Sermon Schema'
+  description: 'Defines required and optional fields for Sermon content type.'
+  
+  # Required fields must be present for a node to save
+  required:
+    - title           # base node title
+    - field_date      # date of the sermon
+    - field_speaker   # speaker of the sermon
+
+  # Optional fields do not prevent save if missing
+  optional:
+    - field_scripture    # scripture reference
+    - field_tags         # tags or categories (multi-value)
+
+  # Fields that can contain multiple values
+  multi_value:
+    - field_tags
+
+# ------------------------------
+# Example: other content type (expandable)
+# ------------------------------
+blog_post:
+  label: 'Blog Post Schema'
+  description: 'Defines schema for blog content type.'
+  required:
+    - title
+    - field_author
+    - field_publish_date
+  optional:
+    - field_summary
+    - field_tags
+  multi_value:
+    - field_tags

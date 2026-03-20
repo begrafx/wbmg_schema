@@ -1,12 +1,7 @@
 services:
-  wbmg_schema.manager:
-    class: Drupal\wbmg_schema\Schema\SchemaManager
-    arguments: ['@container.namespaces', '@cache.discovery', '@module_handler']
+  wbmg_schema.schema_loader:
+    class: Drupal\wbmg_schema\Service\SchemaLoader
 
   wbmg_schema.validator:
-    class: Drupal\wbmg_schema\Schema\SchemaValidator
-    arguments: ['@wbmg_schema.manager']
-
-  wbmg_schema.resolver:
-    class: Drupal\wbmg_schema\Schema\SchemaResolver
-    arguments: ['@config.factory']
+    class: Drupal\wbmg_schema\Service\Validator
+    arguments: ['@wbmg_schema.schema_loader']

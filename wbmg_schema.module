@@ -11,32 +11,34 @@ function wbmg_schema_entity_presave(EntityInterface $entity) {
     return;
   }
 
-  $resolver = \Drupal::service('wbmg_schema.resolver');
-  $validator = \Drupal::service('wbmg_schema.validator');
+  $bundle = $entity->bundle();
 
-  $schema_id = $resolver->getSchemaId($entity);
-  if (!$schema_id) {
-    return;
-  }
+  $validator = \Drupal::service('wbmg_schema.validator');
 
   $data = [];
 
   foreach ($entity->getFields() as $field_name => $field) {
-    // Base field title
+
+    // Handle title (base field)
     if ($field_name === 'title') {
-      $data[$field_name] = $entity->label();
+      $value = $entity->label();
+
+      if (empty($value)) {
+        throw new \Exception("Required field 'title' is missing.");
+      }
+
+      $data[$field_name] = $value;
       continue;
     }
 
-    // Empty field
     if ($field->isEmpty()) {
       $data[$field_name] = NULL;
       continue;
     }
 
-    // Single value
     if ($field->count() === 1) {
       $item = $field->first();
+
       if (isset($item->value)) {
         $data[$field_name] = $item->value;
       }
@@ -47,40 +49,35 @@ function wbmg_schema_entity_presave(EntityInterface $entity) {
         $data[$field_name] = NULL;
       }
     }
-    // Multi-value
     else {
       $values = [];
+
       foreach ($field as $item) {
         if (isset($item->value)) {
           $values[] = $item->value;
-        } elseif (isset($item->target_id)) {
+        }
+        elseif (isset($item->target_id)) {
           $values[] = $item->target_id;
         }
       }
+
       $data[$field_name] = $values;
     }
-  }
-
-  // Check required fields explicitly
-  $schema_plugin = $resolver->getSchemaPlugin($schema_id);
-  foreach ($schema_plugin->getRequiredFields() as $required) {
-    if (!isset($data[$required]) || $data[$required] === NULL || $data[$required] === '') {
-      throw new \Exception("Field '{$required}' is required.");
-    }
-  }
-
-  // Validate remaining fields
-  $errors = $validator->validate($schema_id, $data);
-  if (!empty($errors)) {
-    throw new \Exception(implode("\n", $errors));
   }
 
   // Debug log
   \Drupal::logger('wbmg_schema')->notice(
     "Schema: @schema\nData:\n<pre>@data</pre>",
     [
-      '@schema' => $schema_id,
+      '@schema' => $bundle,
       '@data' => print_r($data, TRUE),
     ]
   );
+
+  // Validate
+  $errors = $validator->validate($bundle, $data);
+
+  if (!empty($errors)) {
+    throw new \Exception("Schema validation failed:\n" . implode("\n", $errors));
+  }
 }
