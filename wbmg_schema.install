@@ -1,8 +1,0 @@
-<?php
-
-/**
- * Implements hook_install().
- */
-function wbmg_schema_install() {
-  // Placeholder for future install logic.
-}

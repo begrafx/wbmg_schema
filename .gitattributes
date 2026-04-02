@@ -1,0 +1,5 @@
+/.github export-ignore
+/tests export-ignore
+.gitignore export-ignore
+*.md export-ignore
+*.log export-ignore

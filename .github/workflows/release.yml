@@ -1,0 +1,32 @@
+name: Build and Release WBMG Schema
+
+on:
+  push:
+    tags:
+      - 'v*'   # triggers on version tags like v0.1.5
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create release package
+        run: |
+          mkdir wbmg_schema
+          rsync -av --exclude='.git' \
+                    --exclude='.github' \
+                    --exclude='tests' \
+                    --exclude='*.zip' \
+                    ./ wbmg_schema/
+
+          zip -r wbmg_schema-${GITHUB_REF_NAME}.zip wbmg_schema
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: wbmg_schema-${{ github.ref_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

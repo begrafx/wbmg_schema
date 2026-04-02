@@ -1,37 +1,33 @@
 <?php
+/**
+ * @file
+ * WBMG Schema Module
+ *
+ * Version: 0.1.5
+ * Date: 2026-04-01
+ * Description:
+ *   Core schema validation system for Angelos.
+ */
+
 
 namespace Drupal\wbmg_schema\Service;
-
-use Drupal\Core\Serialization\Yaml;
 
 class SchemaLoader {
 
   protected $schemas;
 
-  /**
-   * Load all schemas (cached).
-   */
-  public function getAllSchemas() {
-    if (!isset($this->schemas)) {
-      $path = DRUPAL_ROOT . '/modules/custom/wbmg_schema/config/wbmg_schema.schema.yml';
+  public function __construct() {
+    $module_path = \Drupal::service('extension.list.module')->getPath('wbmg_schema');
+    $file = DRUPAL_ROOT . '/' . $module_path . '/config/schema/wbmg_schema.schema.yml';
 
-      if (!file_exists($path)) {
-        $this->schemas = [];
-      }
-      else {
-        $this->schemas = Yaml::decode(file_get_contents($path)) ?? [];
-      }
+    if (file_exists($file)) {
+      $this->schemas = yaml_parse_file($file);
+    } else {
+      $this->schemas = [];
     }
-
-    return $this->schemas;
   }
 
-  /**
-   * Get schema for a specific content type.
-   */
-  public function getSchema($bundle) {
-    $schemas = $this->getAllSchemas();
-    return $schemas[$bundle] ?? NULL;
+  public function getSchema($id) {
+    return $this->schemas[$id] ?? NULL;
   }
-
 }

@@ -1,104 +1,83 @@
 <?php
-
 /**
  * @file
- * wbmg_schema.module
- * 
- * Version: 1.0.1
- * Implements schema validation for custom content types.
+ * WBMG Schema Module
+ *
+ * Version: 0.1.5
+ * Date: 2026-04-01
+ * Description:
+ *   Core schema validation system for Angelos.
  */
 
+
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\wbmg_schema\Service\SchemaValidator;
-use Drupal\wbmg_schema\Service\SchemaResolver;
 
 /**
  * Implements hook_entity_presave().
- *
- * Validates node entities against wbmg_schema schemas before saving.
  */
 function wbmg_schema_entity_presave(EntityInterface $entity) {
 
-  // Only validate node entities.
   if ($entity->getEntityTypeId() !== 'node') {
     return;
   }
 
-  /** @var SchemaResolver $resolver */
   $resolver = \Drupal::service('wbmg_schema.resolver');
-  /** @var SchemaValidator $validator */
   $validator = \Drupal::service('wbmg_schema.validator');
 
-  // Determine the schema ID for this entity.
   $schema_id = $resolver->getSchemaId($entity);
   if (!$schema_id) {
-    // No schema defined for this bundle.
     return;
   }
 
-  // Gather entity field data.
   $data = [];
+
   foreach ($entity->getFields() as $field_name => $field) {
 
-    // Handle base node title separately.
     if ($field_name === 'title') {
       $value = $entity->label();
+
       if (empty($value)) {
-        // Throw an exception if a required field is missing.
         throw new \Exception("Required field 'title' is missing.");
       }
+
       $data[$field_name] = $value;
       continue;
     }
 
-    // Empty fields.
     if ($field->isEmpty()) {
       $data[$field_name] = NULL;
       continue;
     }
 
-    // Single-value field.
     if ($field->count() === 1) {
       $item = $field->first();
+
       if (isset($item->value)) {
         $data[$field_name] = $item->value;
-      }
-      elseif (isset($item->target_id)) {
+      } elseif (isset($item->target_id)) {
         $data[$field_name] = $item->target_id;
-      }
-      else {
+      } else {
         $data[$field_name] = NULL;
       }
     }
-    // Multi-value field.
     else {
       $values = [];
+
       foreach ($field as $item) {
         if (isset($item->value)) {
           $values[] = $item->value;
-        }
-        elseif (isset($item->target_id)) {
+        } elseif (isset($item->target_id)) {
           $values[] = $item->target_id;
         }
       }
+
       $data[$field_name] = $values;
     }
   }
 
-  // Debug log schema and data.
-  \Drupal::logger('wbmg_schema')->notice(
-    "Schema: @schema\nData:\n<pre>@data</pre>",
-    [
-      '@schema' => $schema_id,
-      '@data' => print_r($data, TRUE),
-    ]
-  );
-
-  // Validate all fields against the schema.
   $errors = $validator->validate($schema_id, $data);
 
   if (!empty($errors)) {
-    // Throw exception to prevent node save if required fields are missing.
     throw new \Exception("Schema validation failed:\n" . implode("\n", $errors));
   }
 }

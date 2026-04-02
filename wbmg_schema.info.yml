@@ -1,6 +1,0 @@
-name: WBMG Schema
-type: module
-description: Provides reusable schema definitions for WBMG projects.
-core_version_requirement: ^11
-package: WBMG
-dependencies: []
