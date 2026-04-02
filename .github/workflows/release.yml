@@ -3,7 +3,10 @@ name: Build and Release WBMG Schema
 on:
   push:
     tags:
-      - 'v*'   # triggers on version tags like v0.1.5
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
   build:
