@@ -1,14 +1,184 @@
 # wbmg_schema.schema.yml
-# Version: 0.1.5
+# Version: 0.2.0
+# Expanded schema system for Angelos ecosystem (Media + Malakuth ready)
 
+# ==========================================
+# GLOBAL FIELD CONVENTIONS (implicit)
+# ==========================================
+# All entities support:
+# - uuid (Drupal core)
+# - external_source (string)
+# - external_id (string)
+# These should be treated as a composite unique key externally.
+
+# ==========================================
+# SERMON
+# ==========================================
 sermon:
   label: 'Sermon Schema'
+  description: 'Canonical sermon entity with relationships to media and speakers.'
+
   required:
     - title
     - field_date
     - field_speaker
+
   optional:
     - field_scripture
-    - field_tags
+    - field_series
+    - field_media_items
+    - field_external_source
+    - field_external_id
+
   multi_value:
-    - field_tags
+    - field_media_items
+
+  relationships:
+    speaker:
+      field: field_speaker
+      type: reference
+      cardinality: single
+
+    media_items:
+      field: field_media_items
+      type: reference
+      cardinality: multiple
+
+    series:
+      field: field_series
+      type: reference
+      cardinality: single
+
+---
+
+# ==========================================
+# SPEAKER
+# ==========================================
+speaker:
+  label: 'Speaker Schema'
+  description: 'Canonical speaker identity with alias support.'
+
+  required:
+    - title   # primary name
+
+  optional:
+    - field_aliases
+    - field_slug
+    - field_external_source
+    - field_external_id
+
+  multi_value:
+    - field_aliases
+
+---
+
+# ==========================================
+# MEDIA ITEM
+# ==========================================
+media_item:
+  label: 'Media Item Schema'
+  description: 'Abstract media object (video, audio, livestream, etc).'
+
+  required:
+    - title
+    - field_media_type
+
+  optional:
+    - field_external_source
+    - field_external_id
+    - field_speaker
+    - field_series
+    - field_published_at
+    - field_scheduled_start
+    - field_actual_start
+    - field_actual_end
+    - field_is_live
+    - field_metadata
+
+  multi_value:
+    - field_speaker
+
+  relationships:
+    speaker:
+      field: field_speaker
+      type: reference
+      cardinality: multiple
+
+    series:
+      field: field_series
+      type: reference
+      cardinality: single
+
+  enums:
+    field_media_type:
+      - youtube
+      - audio
+      - livestream
+      - upload
+
+---
+
+# ==========================================
+# SERIES
+# ==========================================
+series:
+  label: 'Series Schema'
+  description: 'Grouping for sermons/media.'
+
+  required:
+    - title
+
+  optional:
+    - field_external_source
+    - field_external_id
+
+---
+
+# ==========================================
+# PLAYLIST / COLLECTION
+# ==========================================
+playlist:
+  label: 'Playlist Schema'
+  description: 'External or internal media collections (e.g. YouTube playlists).'
+
+  required:
+    - title
+    - field_external_id
+
+  optional:
+    - field_external_source
+    - field_channel_id
+    - field_media_items
+    - field_is_active
+
+  multi_value:
+    - field_media_items
+
+---
+
+# ==========================================
+# GLOBAL INDEX HINTS (for future use)
+# ==========================================
+_indexes:
+  media_item:
+    - field_external_id
+    - field_media_type
+    - field_published_at
+    - field_is_live
+
+  sermon:
+    - field_date
+
+  speaker:
+    - title
+
+---
+
+# ==========================================
+# GLOBAL CONSTRAINTS (future enforcement)
+# ==========================================
+_constraints:
+  unique_external:
+    fields:
+      - field_external_source
+      - field_external_id
