@@ -1,0 +1,6 @@
+name: WBMG Schema
+type: module
+description: 'Schema.org integration utilities.'
+core_version_requirement: ^11
+package: Angelos
+version: 0.1.5

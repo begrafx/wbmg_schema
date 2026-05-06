@@ -8,11 +8,18 @@ namespace Drupal\wbmg_schema\Service;
  * Version: 0.2.0
  *
  * Validates entity data against YAML-defined schema.
+ * WBMG-Dev compliant: spec-driven, no business logic, extensible.
  */
 class SchemaValidator {
 
+  /**
+   * @var \Drupal\wbmg_schema\Service\SchemaLoader
+   */
   protected $schemaLoader;
 
+  /**
+   * Constructor.
+   */
   public function __construct(SchemaLoader $schemaLoader) {
     $this->schemaLoader = $schemaLoader;
   }
@@ -31,21 +38,22 @@ class SchemaValidator {
 
     $schema = $this->schemaLoader->getSchema($schema_id);
 
-    if (!$schema) {
-      return [];
+    // --------------------------------------------------
+    // Schema existence check (no silent failure)
+    // --------------------------------------------------
+    if (!$schema || !is_array($schema)) {
+      return ["Schema '{$schema_id}' is missing or invalid."];
     }
 
-    /**
-     * ----------------------------------------
-     * Required Fields Validation
-     * ----------------------------------------
-     */
+    // --------------------------------------------------
+    // Required Fields Validation
+    // --------------------------------------------------
     if (!empty($schema['required'])) {
       foreach ($schema['required'] as $field) {
 
-        // Missing field entirely
+        // Field not present at all
         if (!array_key_exists($field, $data)) {
-          $errors[] = "Required field '{$field}' is missing.";
+          $errors[] = "[Field: {$field}] Required field is missing.";
           continue;
         }
 
@@ -53,56 +61,99 @@ class SchemaValidator {
 
         // Null or empty string
         if ($value === NULL || $value === '') {
-          $errors[] = "Required field '{$field}' cannot be empty.";
+          $errors[] = "[Field: {$field}] Required field cannot be empty.";
           continue;
         }
 
-        // Empty array (for multi-value)
+        // Empty array (multi-value edge case)
         if (is_array($value) && empty($value)) {
-          $errors[] = "Required field '{$field}' cannot be an empty array.";
+          $errors[] = "[Field: {$field}] Required field cannot be an empty array.";
         }
       }
     }
 
-    /**
-     * ----------------------------------------
-     * Multi-value Validation
-     * ----------------------------------------
-     */
+    // --------------------------------------------------
+    // Multi-value Field Validation
+    // --------------------------------------------------
     if (!empty($schema['multi_value'])) {
       foreach ($schema['multi_value'] as $field) {
-        if (isset($data[$field]) && !is_array($data[$field]) && $data[$field] !== NULL) {
-          $errors[] = "Field '{$field}' must be an array (multi-value field).";
+
+        if (array_key_exists($field, $data) && $data[$field] !== NULL && !is_array($data[$field])) {
+          $errors[] = "[Field: {$field}] Must be an array (multi-value field).";
         }
       }
     }
 
-    /**
-     * ----------------------------------------
-     * Enum Validation
-     * ----------------------------------------
-     */
+    // --------------------------------------------------
+    // Enum Validation (strict comparison)
+    // --------------------------------------------------
     if (!empty($schema['enums'])) {
       foreach ($schema['enums'] as $field => $allowed_values) {
 
-        if (!isset($data[$field]) || $data[$field] === NULL || $data[$field] === '') {
+        if (!array_key_exists($field, $data) || $data[$field] === NULL || $data[$field] === '') {
           continue;
         }
 
         $value = $data[$field];
 
-        // Handle multi-value enums if needed later
         if (is_array($value)) {
           foreach ($value as $item) {
-            if (!in_array($item, $allowed_values)) {
-              $errors[] = "Invalid value '{$item}' for field '{$field}'.";
+            if (!in_array($item, $allowed_values, TRUE)) {
+              $errors[] = "[Field: {$field}] Invalid value '{$item}'.";
             }
           }
         }
         else {
-          if (!in_array($value, $allowed_values)) {
-            $errors[] = "Invalid value '{$value}' for field '{$field}'. Allowed values: " . implode(', ', $allowed_values);
+          if (!in_array($value, $allowed_values, TRUE)) {
+              $errors[] = "[Field: {$field}] Invalid value '{$value}'. Allowed: " . implode(', ', $allowed_values);
           }
+        }
+      }
+    }
+
+    // --------------------------------------------------
+    // Basic Type Validation (Extensible)
+    // --------------------------------------------------
+    if (!empty($schema['types'])) {
+      foreach ($schema['types'] as $field => $type) {
+
+        if (!array_key_exists($field, $data) || $data[$field] === NULL) {
+          continue;
+        }
+
+        $value = $data[$field];
+
+        switch ($type) {
+
+          case 'string':
+            if (!is_string($value)) {
+              $errors[] = "[Field: {$field}] Must be a string.";
+            }
+            break;
+
+          case 'array':
+            if (!is_array($value)) {
+              $errors[] = "[Field: {$field}] Must be an array.";
+            }
+            break;
+
+          case 'boolean':
+            if (!is_bool($value)) {
+              $errors[] = "[Field: {$field}] Must be a boolean.";
+            }
+            break;
+
+          case 'integer':
+            if (!is_int($value)) {
+              $errors[] = "[Field: {$field}] Must be an integer.";
+            }
+            break;
+
+          // Future-ready hooks:
+          // case 'datetime':
+          // case 'uuid':
+          // case 'float':
+
         }
       }
     }
