@@ -49,28 +49,42 @@ class SchemaValidator {
     // Required Fields Validation
     // --------------------------------------------------
     if (!empty($schema['required'])) {
-      foreach ($schema['required'] as $field) {
 
-        // Field not present at all
-        if (!array_key_exists($field, $data)) {
-          $errors[] = "[Field: {$field}] Required field is missing.";
-          continue;
-        }
+  foreach ($schema['required'] as $field) {
 
-        $value = $data[$field];
+    // Field missing entirely
+    if (!array_key_exists($field, $data)) {
+      $errors[] = "[Field: {$field}] Required field is missing.";
+      continue;
+    }
 
-        // Null or empty string
-        if ($value === NULL || $value === '') {
-          $errors[] = "[Field: {$field}] Required field cannot be empty.";
-          continue;
-        }
+    $value = $data[$field];
 
-        // Empty array (multi-value edge case)
-        if (is_array($value) && empty($value)) {
-          $errors[] = "[Field: {$field}] Required field cannot be an empty array.";
-        }
+    // NULL
+    if ($value === NULL) {
+      $errors[] = "[Field: {$field}] Required field cannot be NULL.";
+      continue;
+    }
+
+    // String validation
+    if (is_string($value)) {
+
+      // Trim whitespace
+      $value = trim($value);
+
+      if ($value === '') {
+        $errors[] = "[Field: {$field}] Required field cannot be empty.";
+        continue;
       }
     }
+
+    // Array validation
+    if (is_array($value) && empty($value)) {
+      $errors[] = "[Field: {$field}] Required multi-value field cannot be empty.";
+      continue;
+    }
+  }
+}
 
     // --------------------------------------------------
     // Multi-value Field Validation

@@ -2,10 +2,13 @@ services:
 
   wbmg_schema.schema_loader:
     class: Drupal\wbmg_schema\Service\SchemaLoader
+    arguments:
+      - '@extension.list.module'
 
   wbmg_schema.validator:
     class: Drupal\wbmg_schema\Service\SchemaValidator
-    arguments: ['@wbmg_schema.schema_loader']
+    arguments:
+      - '@wbmg_schema.schema_loader'
 
   wbmg_schema.resolver:
     class: Drupal\wbmg_schema\Service\SchemaResolver
